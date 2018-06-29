@@ -1,0 +1,59 @@
+#!/bin/bash
+# https://github.com/magJ/go-ui-crossbuild
+
+mydir=$1
+BUILD_OUT=$2
+ARCH=$3
+
+TARGET=$4
+
+echo "build dir:$mydir"
+
+# echo 'Building macos-${ARCH} binary..' && \
+# GOOS=darwin CGO_LDFLAGS_ALLOW='\-mmacosx-version-min.*' CC=o64-clang CXX=o64-clang++ go build -o ${BUILD_OUT}_darwin.app && \
+# echo 'ALL DONE!' \
+
+
+if [ "y$TARGET" = "yl" ]; then
+
+docker run -it -v $mydir:/go/src magj/go-ui-crossbuild /bin/bash -c " \
+    echo 'Building linux-${ARCH} binary..' && \
+    CGO_ENABLED=1 GOARCH=amd64 GOOS=linux CC=clang CXX=clang++ go build -o ${BUILD_OUT}_linux-amd64  && \
+	rm -rf build && mkdir build && \
+    mv ${BUILD_OUT}* build && \
+	chown 1000:1000 build && chown 1000:1000 -R build/* \
+    "
+exit 0
+
+fi
+
+if [ "y$TARGET" = "yw" ]; then
+
+docker run -it -v $mydir:/go/src magj/go-ui-crossbuild /bin/bash -c " \
+    echo 'Building windows-${ARCH} binary..'
+    CGO_ENABLED=1 GOARCH=amd64 GOOS=windows CC=x86_64-w64-mingw32-gcc CXX=x86_64-w64-mingw32-g++ go build -o ${BUILD_OUT}_windows-amd64.exe -ldflags '\-H=windowsgui \-extldflags=-s' && \
+    rm -rf build && mkdir build && \
+    mv ${BUILD_OUT}* build && \
+	chown 1000:1000 build && chown 1000:1000 -R build/* \
+    "
+exit 0
+
+fi
+
+
+if [ "y$TARGET" = "yall" ]; then
+
+docker run -it -v $mydir:/go/src magj/go-ui-crossbuild /bin/bash -c " \
+    echo 'Building linux-${ARCH} binary..' && \
+    CGO_ENABLED=1 GOARCH=amd64 GOOS=linux CC=clang CXX=clang++ go build -o ${BUILD_OUT}_linux-amd64  && \
+    echo 'Building windows-${ARCH} binary..'
+    CGO_ENABLED=1 GOARCH=amd64 GOOS=windows CC=x86_64-w64-mingw32-gcc CXX=x86_64-w64-mingw32-g++ go build -o ${BUILD_OUT}_windows-amd64.exe -ldflags '\-H=windowsgui \-extldflags=-s' && \
+    rm -rf build && mkdir build && \
+    mv ${BUILD_OUT}* build && \
+	chown 1000:1000 build && chown 1000:1000 -R build/* \
+    "
+exit 0
+
+fi
+
+
